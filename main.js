@@ -1,11 +1,12 @@
 import * as THREE from "three"
 import * as POSTPROCESSING from "postprocessing"
-
-import { SSGIEffect, TRAAEffect, VelocityDepthNormalPass } from "./src/lib/realism-effects"
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js"
 import { RGBELoader } from "three/examples/jsm/loaders/RGBELoader"
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js"
+import { SSGIEffect, TRAAEffect, VelocityDepthNormalPass } from "./src/lib/realism-effects"
 
-let scene, camera, renderer, composer;
+
+let scene, camera, renderer, controls, composer;
 
 const options = {
     renderer: {
@@ -56,10 +57,10 @@ const init = () => {
 
     // setup camera
     camera = new THREE.PerspectiveCamera(
-        75,
+        70,
         window.innerWidth / window.innerHeight,
         0.1,
-        1000
+        250
     );
     camera.position.set(0, 0, 2);
 
@@ -67,6 +68,14 @@ const init = () => {
     renderer = new THREE.WebGLRenderer(options.renderer);
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
+
+    // setup camera orbit
+    controls = new OrbitControls(camera, document.querySelector("#orbitControlsDomElem"))
+    controls.enableDamping = true;
+    camera.position.fromArray([0, 0, 3]);
+    controls.target.set(0, 0, 0);
+    controls.maxPolarAngle = Math.PI / 2;
+    controls.minDistance = 1;
 
     // load hdr environment
     const rgbeLoader = new RGBELoader()
@@ -133,6 +142,10 @@ window.addEventListener('resize', function () {
 
 
 const loop = () => {
+    // const dt = THREE.clock.getDelta()
+	// if (controls.enableDamping) controls.dampingFactor = 0.075 * 120 * Math.max(1 / 1000, dt)
+	controls.update();
+	camera.updateMatrixWorld();
 
     composer.render();
 }
