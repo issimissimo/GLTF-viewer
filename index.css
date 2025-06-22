@@ -1,0 +1,36 @@
+:root {
+    font-family: "Open Sans", sans-serif;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
+#fileInput {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 100;
+    font-family: "Open Sans", sans-serif;
+}
+
+#fileInput input[type="file"] {
+    display: none;
+    /* Nascondi l'input originale */
+}
+
+#fileInput label {
+    padding: 8px 16px;
+    background: #007bff;
+    color: white;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: "Open Sans", sans-serif;
+    display: inline-block;
+}
+
+#fileInput label:hover {
+    background: #0056b3;
+}
