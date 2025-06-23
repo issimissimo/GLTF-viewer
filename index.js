@@ -120,10 +120,13 @@ window.addEventListener('resize', function () {
     renderer.setSize(window.innerWidth, window.innerHeight);
 });
 
+// render loop
 const loop = () => {
     controls.update();
     camera.updateMatrixWorld();
-    composer.render();
+
+    // render
+    options.useComposer ? composer.render() : renderer.render(scene, camera);
 }
 
 init();

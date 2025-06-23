@@ -1,6 +1,7 @@
 import * as THREE from "three"
 
 export const options = {
+    useComposer: false,
     renderer: {
         antialias: false,
         alpha: true,
