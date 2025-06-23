@@ -4,80 +4,32 @@ import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js"
 import { RGBELoader } from "three/examples/jsm/loaders/RGBELoader"
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js"
 import { SSGIEffect, TRAAEffect, VelocityDepthNormalPass } from "./src/lib/realism-effects"
+import { options } from "./src/options"
 
 
 let scene, camera, renderer, controls, composer;
+let currentModel = null;
 
-const options = {
-    renderer: {
-        antialias: true,
-        alpha: true,
-        depth: true,
-        stencil: false,
-        premultipliedAlpha: false,
-        preserveDrawingBuffer: true
-    },
-    backgroundColor: new THREE.Color(0xdadada),
-    envMap: "hdr/studio.hdr",
-    ssgi: {
-        distance: 5.98,
-        thickness: 2.83,
-        denoiseIterations: 1,
-        denoiseKernel: 3,
-        denoiseDiffuse: 25,
-        denoiseSpecular: 25.54,
-        radius: 11,
-        phi: 0.875,
-        lumaPhi: 20.652,
-        depthPhi: 23.37,
-        normalPhi: 26.087,
-        roughnessPhi: 18.478,
-        specularPhi: 7.1,
-        envBlur: 0,
-        importanceSampling: true,
-        steps: 20,
-        refineSteps: 4,
-        resolutionScale: 1,
-        missedRays: false
-    },
-    traa: {
-        fullAccumulate: true
-    },
-    vignette: {
-        darkness: 0.5,
-        offset: 0.3
-    },
-}
 
 const init = () => {
 
-    // setup scene
     scene = new THREE.Scene();
     scene.background = options.backgroundColor;
 
-    // setup camera
-    camera = new THREE.PerspectiveCamera(
-        70,
-        window.innerWidth / window.innerHeight,
-        0.1,
-        250
-    );
+    camera = new THREE.PerspectiveCamera(...options.camera);
     camera.position.set(0, 0, 2);
 
-    // setup renderer
     renderer = new THREE.WebGLRenderer(options.renderer);
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
 
-    // setup camera orbit
     controls = new OrbitControls(camera, document.querySelector("#orbitControlsDomElem"))
     controls.enableDamping = true;
     camera.position.fromArray([0, 0, 3]);
     controls.target.set(0, 0, 0);
     controls.maxPolarAngle = Math.PI / 2;
-    controls.minDistance = 1;
+    controls.minDistance = 0.5;
 
-    // load hdr environment
     const rgbeLoader = new RGBELoader()
     rgbeLoader.load(options.envMap, (envMap) => {
         envMap.mapping = THREE.EquirectangularReflectionMapping;
@@ -104,34 +56,63 @@ const init = () => {
     const vignetteEffect = new POSTPROCESSING.VignetteEffect(options.vignette)
     composer.addPass(new POSTPROCESSING.EffectPass(camera, vignetteEffect))
 
-    // start render loop
     renderer.setAnimationLoop(loop);
+};
 
 
-
+const loadTestGLTF = () => {
     const gltflLoader = new GLTFLoader()
-    let url = "gltf/monkey.glb"
+    let url = options.testModel.url;
     gltflLoader.load(url, asset => {
-        console.log(asset)
-        scene.add(asset.scene)
-
-
-
-
-
-
-
-
-
-
-
+        currentModel = asset.scene;
+        scene.add(currentModel)
     })
-
-
-
 }
 
 
+const loadGLTF = (file) => {
+    const reader = new FileReader();
+    reader.onload = function (e) {
+        const loader = new GLTFLoader();
+        const url = URL.createObjectURL(file);
+
+        loader.load(url, function (gltf) {
+
+            if (currentModel) {
+                scene.remove(currentModel);
+            }
+
+            currentModel = gltf.scene;
+            scene.add(currentModel);
+
+            // center and scale model
+            const box = new THREE.Box3().setFromObject(currentModel);
+            const center = box.getCenter(new THREE.Vector3());
+            const size = box.getSize(new THREE.Vector3());
+
+            currentModel.position.sub(center);
+
+            const maxDim = Math.max(size.x, size.y, size.z);
+            const scale = 2 / maxDim;
+            currentModel.scale.setScalar(scale);
+
+            URL.revokeObjectURL(url);
+        }, undefined, function (error) {
+            console.error('Error loading GLTF:', error);
+            alert('Error loading GLTF - ' + error);
+            URL.revokeObjectURL(url);
+        });
+    };
+
+    reader.readAsDataURL(file);
+}
+
+document.getElementById('gltfFile').addEventListener('change', function (e) {
+    const file = e.target.files[0];
+    if (file) {
+        loadGLTF(file);
+    }
+});
 
 window.addEventListener('resize', function () {
     camera.aspect = window.innerWidth / window.innerHeight;
@@ -139,18 +120,16 @@ window.addEventListener('resize', function () {
     renderer.setSize(window.innerWidth, window.innerHeight);
 });
 
-
-
 const loop = () => {
-    // const dt = THREE.clock.getDelta()
-	// if (controls.enableDamping) controls.dampingFactor = 0.075 * 120 * Math.max(1 / 1000, dt)
-	controls.update();
-	camera.updateMatrixWorld();
-
+    controls.update();
+    camera.updateMatrixWorld();
     composer.render();
 }
 
 init();
+
+// load test model
+if (options.testModel.load) loadTestGLTF();
 
 
 
