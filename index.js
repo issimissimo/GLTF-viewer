@@ -1,17 +1,21 @@
 import * as THREE from "three"
 import * as POSTPROCESSING from "postprocessing"
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js"
+import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader"
 import { RGBELoader } from "three/examples/jsm/loaders/RGBELoader"
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js"
 import { SSGIEffect, TRAAEffect, VelocityDepthNormalPass } from "./src/lib/realism-effects"
 import { options } from "./src/options"
+import { debug } from "./src/debug"
 
 
-let scene, camera, renderer, controls, composer;
+let scene, camera, renderer, environment, controls, composer, gltflLoader
 let currentModel = null;
 
 
 const init = () => {
+
+    debug();
 
     scene = new THREE.Scene();
     scene.background = options.backgroundColor;
@@ -31,10 +35,17 @@ const init = () => {
     controls.minDistance = 0.5;
 
     const rgbeLoader = new RGBELoader()
-    rgbeLoader.load(options.envMap, (envMap) => {
-        envMap.mapping = THREE.EquirectangularReflectionMapping;
-        scene.environment = envMap;
+    rgbeLoader.load(options.envMap.url, (envMap) => {
+        environment = envMap;
+        environment.mapping = THREE.EquirectangularReflectionMapping;
+        scene.environment = environment;
     });
+
+    const draco = new DRACOLoader();
+    draco.setDecoderConfig({ type: "js" });
+    draco.setDecoderPath("https://www.gstatic.com/draco/v1/decoders/");
+    gltflLoader = new GLTFLoader();
+    gltflLoader.setDRACOLoader(draco);
 
     // Initialize composer
     composer = new POSTPROCESSING.EffectComposer(renderer)
@@ -61,7 +72,7 @@ const init = () => {
 
 
 const loadTestGLTF = () => {
-    const gltflLoader = new GLTFLoader()
+    // const gltflLoader = new GLTFLoader()
     let url = options.testModel.url;
     gltflLoader.load(url, asset => {
         currentModel = asset.scene;
@@ -73,10 +84,10 @@ const loadTestGLTF = () => {
 const loadGLTF = (file) => {
     const reader = new FileReader();
     reader.onload = function (e) {
-        const loader = new GLTFLoader();
+        // const loader = new GLTFLoader();
         const url = URL.createObjectURL(file);
 
-        loader.load(url, function (gltf) {
+        gltflLoader.load(url, function (gltf) {
 
             if (currentModel) {
                 scene.remove(currentModel);
@@ -133,6 +144,19 @@ init();
 
 // load test model
 if (options.testModel.load) loadTestGLTF();
+
+
+function changeModelColor(color) {
+    if (!currentModel) return;
+    currentModel.traverse(function (child) {
+        if (child.isMesh && child.material) {
+            child.material.color.setHex(color);
+        }
+    });
+}
+
+
+
 
 
 

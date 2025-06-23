@@ -8,12 +8,16 @@ body {
     overflow: hidden;
 }
 
-#fileInput {
+#overlay {
     position: absolute;
     top: 10px;
     left: 10px;
     z-index: 100;
     font-family: "Open Sans", sans-serif;
+}
+
+#fileInput {
+    margin-bottom: 20px;
 }
 
 #fileInput input[type="file"] {

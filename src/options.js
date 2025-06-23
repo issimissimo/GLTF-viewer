@@ -12,7 +12,10 @@ export const options = {
     },
     camera: [70, window.innerWidth / window.innerHeight, 0.1, 250],
     backgroundColor: new THREE.Color(0xffffff),
-    envMap: "hdr/studio.hdr",
+    envMap: {
+        url: "hdr/studio.hdr",
+        // url: "hdr/studio_11zon.jpg",
+    }, 
     ssgi: {
         distance: 5.98,
         thickness: 2.83,
