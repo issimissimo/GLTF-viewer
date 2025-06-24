@@ -6,6 +6,7 @@ import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader"
 import { RGBELoader } from "three/examples/jsm/loaders/RGBELoader"
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js"
 import { SSGIEffect, TRAAEffect, VelocityDepthNormalPass } from "./src/lib/realism-effects"
+import { N8AOPostPass } from "n8ao";
 import { options } from "./src/options"
 import { debug } from "./src/debug"
 
@@ -19,7 +20,7 @@ const init = () => {
     debug();
 
     scene = new THREE.Scene();
-    scene.background = options.backgroundColor;
+    // scene.background = options.backgroundColor;
 
     camera = new THREE.PerspectiveCamera(...options.camera);
     camera.position.set(0, 0, 2);
@@ -54,23 +55,37 @@ const init = () => {
     // RENDER pass
     composer.addPass(new POSTPROCESSING.RenderPass(scene, camera));
 
-    // SSAO pass
-    const ssao = new POSTPROCESSING.SSAOEffect(camera, {
-        blendFunction: BlendFunction.MULTIPLY,
-        distanceScaling: false,
-        radius: 2,
-        intensity: 1,
-    })
-    console.log(ssao)
-    ssao.radius = 0.5
-    ssao.samples = 30
-    ssao.rings = 24
-    composer.addPass(new POSTPROCESSING.EffectPass(camera, ssao))
-    
-    
+
+
+    const n8aopass = new N8AOPostPass(
+        scene,
+        camera,
+        window.innerWidth, 
+        window.innerHeight,
+    );
+    n8aopass.configuration.aoRadius = 0.5;
+    n8aopass.configuration.distanceFalloff = 1;
+    // n8aopass.setQualityMode("Ultra");
+    composer.addPass(n8aopass)
+
+    // // SSAO pass
+    // const ssao = new POSTPROCESSING.SSAOEffect(camera, {
+
+    //     radius: 2,
+    //     intensity: 1,
+    // })
+    // console.log(ssao)
+
+    // ssao.radius = 5
+    // ssao.samples = 256
+    // ssao.intensity = 5
+
+    // composer.addPass(new POSTPROCESSING.EffectPass(camera, ssao))
+
+
     // // BLOOM pass
     // composer.addPass(new POSTPROCESSING.EffectPass(camera, new POSTPROCESSING.BloomEffect()));
-    
+
 
     // // VELOCITY pass
     // const velocityDepthNormalPass = new VelocityDepthNormalPass(scene, camera);

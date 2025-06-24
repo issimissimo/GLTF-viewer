@@ -3,7 +3,7 @@ import * as THREE from "three"
 export const options = {
     useComposer: true,
     renderer: {
-        antialias: false,
+        antialias: true,
         alpha: true,
         depth: true,
         stencil: false,
@@ -14,7 +14,6 @@ export const options = {
     backgroundColor: new THREE.Color(0xffffff),
     envMap: {
         url: "hdr/studio.hdr",
-        // url: "hdr/studio_11zon.jpg",
     },
     ssao1: {
 
