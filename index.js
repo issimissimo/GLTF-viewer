@@ -29,8 +29,10 @@ const init = () => {
     camera = new THREE.PerspectiveCamera(...options.camera);
     camera.position.set(0, 0, 2);
 
+    // initialize renderer
     renderer = new THREE.WebGLRenderer(options.renderer);
     renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
     document.body.appendChild(renderer.domElement);
 
     // initialize controls
@@ -56,8 +58,13 @@ const init = () => {
     gltflLoader = new GLTFLoader();
     gltflLoader.setDRACOLoader(draco);
 
+    // initialize ProgressiveShadows
+    const shadowCatcherSize = 8
+    progressiveShadows = new ProgressiveShadows(renderer, scene, { size: shadowCatcherSize })
+    progressiveShadows.lightOrigin.position.set(-3, 3, 3)
+
     // initialize composer
-    composer = new POSTPROCESSING.EffectComposer(renderer)
+    composer = new POSTPROCESSING.EffectComposer(renderer);
 
     // RENDER pass
     composer.addPass(new POSTPROCESSING.RenderPass(scene, camera));
@@ -96,16 +103,26 @@ const init = () => {
 };
 
 
+
+
 const loadTestGLTF = () => {
     let url = options.testModel.url;
     gltflLoader.load(url, asset => {
         currentModel = asset.scene;
+
+        addShadowsToCurrentModel();
+
+
         scene.add(currentModel)
 
-        console.log(currentModel.children[0])
-        // const newMat = new THREE.MeshBasicMaterial({color: 'green'})
-        const newMat = new THREE.ShadowMaterial();
-        currentModel.children[0].material = newMat
+        console.log(currentModel)
+
+        // console.log(currentModel.children[0])
+        // // const newMat = new THREE.MeshBasicMaterial({color: 'green'})
+        // const newMat = new THREE.ShadowMaterial();
+        // currentModel.children[0].material = newMat
+
+        progressiveShadows.clear();
     })
 }
 
@@ -164,6 +181,8 @@ const loop = () => {
     controls.update();
     camera.updateMatrixWorld();
 
+    progressiveShadows.update(camera)
+
     // render
     options.useComposer ? composer.render() : renderer.render(scene, camera);
 }
@@ -174,9 +193,20 @@ init();
 if (options.testModel.load) loadTestGLTF();
 
 
+function addShadowsToCurrentModel() {
+    if (!currentModel) return;
+    currentModel.traverse((child) => {
+        if (child.isMesh) {
+            child.castShadow = true
+            child.receiveShadow = true
+        }
+    })
+}
+
+
 function changeModelColor(color) {
     if (!currentModel) return;
-    currentModel.traverse(function (child) {
+    currentModel.traverse((child) => {
         if (child.isMesh && child.material) {
             child.material.color.setHex(color);
         }
