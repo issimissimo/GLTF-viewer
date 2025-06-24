@@ -7,8 +7,9 @@ export const debug  = () => {
     const checkbox = document.createElement('input');
     checkbox.type = 'checkbox';
     checkbox.id = 'SSGI';
+    checkbox.checked = true;
     const label = document.createElement('label');
-    label.textContent = 'use SSGI';
+    label.textContent = 'use POSTPROCESSING';
     label.htmlFor = 'SSGI';
     container.appendChild(checkbox);
     container.appendChild(label);

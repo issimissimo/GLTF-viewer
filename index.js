@@ -1,5 +1,6 @@
 import * as THREE from "three"
 import * as POSTPROCESSING from "postprocessing"
+import { BlendFunction } from 'postprocessing'
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js"
 import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader"
 import { RGBELoader } from "three/examples/jsm/loaders/RGBELoader"
@@ -50,22 +51,40 @@ const init = () => {
     // Initialize composer
     composer = new POSTPROCESSING.EffectComposer(renderer)
 
-    // VELOCITY pass
-    const velocityDepthNormalPass = new VelocityDepthNormalPass(scene, camera);
-    composer.addPass(velocityDepthNormalPass);
+    // RENDER pass
+    composer.addPass(new POSTPROCESSING.RenderPass(scene, camera));
 
-    // SSGI pass
-    const ssgiEffect = new SSGIEffect(composer, scene, camera, { ...options.ssgi, velocityDepthNormalPass });
-    composer.addPass(new POSTPROCESSING.EffectPass(scene, ssgiEffect));
+    // SSAO pass
+    const ssao = new POSTPROCESSING.SSAOEffect(camera, {
+        blendFunction: BlendFunction.MULTIPLY,
+        distanceScaling: false,
+        radius: 2,
+        intensity: 1,
+    })
+    composer.addPass(new POSTPROCESSING.EffectPass(camera, ssao))
+    
+    
+    // // BLOOM pass
+    // composer.addPass(new POSTPROCESSING.EffectPass(camera, new POSTPROCESSING.BloomEffect()));
+    
 
-    // TRAA pass
-    const traaEffect = new TRAAEffect(scene, camera, velocityDepthNormalPass, options.traa)
-    const traaPass = new POSTPROCESSING.EffectPass(camera, traaEffect)
-    composer.addPass(traaPass)
+    // // VELOCITY pass
+    // const velocityDepthNormalPass = new VelocityDepthNormalPass(scene, camera);
+    // composer.addPass(velocityDepthNormalPass);
 
-    // VIGNETTE pass
-    const vignetteEffect = new POSTPROCESSING.VignetteEffect(options.vignette)
-    composer.addPass(new POSTPROCESSING.EffectPass(camera, vignetteEffect))
+    // // SSGI pass
+    // const ssgiEffect = new SSGIEffect(composer, scene, camera, { ...options.ssgi, velocityDepthNormalPass });
+    // composer.addPass(new POSTPROCESSING.EffectPass(scene, ssgiEffect));
+
+
+    // // TRAA pass
+    // const traaEffect = new TRAAEffect(scene, camera, velocityDepthNormalPass, options.traa)
+    // const traaPass = new POSTPROCESSING.EffectPass(camera, traaEffect)
+    // composer.addPass(traaPass)
+
+    // // VIGNETTE pass
+    // const vignetteEffect = new POSTPROCESSING.VignetteEffect(options.vignette)
+    // composer.addPass(new POSTPROCESSING.EffectPass(camera, vignetteEffect))
 
     renderer.setAnimationLoop(loop);
 };

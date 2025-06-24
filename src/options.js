@@ -1,7 +1,7 @@
 import * as THREE from "three"
 
 export const options = {
-    useComposer: false,
+    useComposer: true,
     renderer: {
         antialias: false,
         alpha: true,
@@ -15,7 +15,10 @@ export const options = {
     envMap: {
         url: "hdr/studio.hdr",
         // url: "hdr/studio_11zon.jpg",
-    }, 
+    },
+    ssao1: {
+
+    },
     ssgi: {
         distance: 5.98,
         thickness: 2.83,
