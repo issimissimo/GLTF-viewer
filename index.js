@@ -1,18 +1,22 @@
 import * as THREE from "three"
 import * as POSTPROCESSING from "postprocessing"
-import { BlendFunction } from 'postprocessing'
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js"
 import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader"
 import { RGBELoader } from "three/examples/jsm/loaders/RGBELoader"
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js"
 import { SSGIEffect, TRAAEffect, VelocityDepthNormalPass } from "./src/lib/realism-effects"
 import { N8AOPostPass } from "n8ao";
+import { ProgressiveShadows } from "./src/lib/progressive-shadows"
 import { options } from "./src/options"
 import { debug } from "./src/debug"
 
 
 let scene, camera, renderer, environment, controls, composer, gltflLoader
 let currentModel = null;
+let /**
+   * @type {ProgressiveShadows}
+   */
+    progressiveShadows;
 
 
 const init = () => {
@@ -29,6 +33,7 @@ const init = () => {
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
 
+    // initialize controls
     controls = new OrbitControls(camera, document.querySelector("#orbitControlsDomElem"))
     controls.enableDamping = true;
     camera.position.fromArray([0, 0, 3]);
@@ -36,6 +41,7 @@ const init = () => {
     controls.maxPolarAngle = Math.PI / 2;
     controls.minDistance = 0.5;
 
+    // initialize environment
     const rgbeLoader = new RGBELoader()
     rgbeLoader.load(options.envMap.url, (envMap) => {
         environment = envMap;
@@ -43,44 +49,25 @@ const init = () => {
         scene.environment = environment;
     });
 
+    // initialize Draco
     const draco = new DRACOLoader();
     draco.setDecoderConfig({ type: "js" });
     draco.setDecoderPath("https://www.gstatic.com/draco/v1/decoders/");
     gltflLoader = new GLTFLoader();
     gltflLoader.setDRACOLoader(draco);
 
-    // Initialize composer
+    // initialize composer
     composer = new POSTPROCESSING.EffectComposer(renderer)
 
     // RENDER pass
     composer.addPass(new POSTPROCESSING.RenderPass(scene, camera));
 
-
-
-    const n8aopass = new N8AOPostPass(
-        scene,
-        camera,
-        window.innerWidth, 
-        window.innerHeight,
-    );
-    n8aopass.configuration.aoRadius = 0.5;
-    n8aopass.configuration.distanceFalloff = 1;
-    // n8aopass.setQualityMode("Ultra");
+    // N8AO pass
+    const n8aopass = new N8AOPostPass(scene, camera, window.innerWidth, window.innerHeight);
+    n8aopass.configuration.aoRadius = options.N8AO.radius;
+    n8aopass.configuration.distanceFalloff = options.N8AO.distanceFalloff;
     composer.addPass(n8aopass)
 
-    // // SSAO pass
-    // const ssao = new POSTPROCESSING.SSAOEffect(camera, {
-
-    //     radius: 2,
-    //     intensity: 1,
-    // })
-    // console.log(ssao)
-
-    // ssao.radius = 5
-    // ssao.samples = 256
-    // ssao.intensity = 5
-
-    // composer.addPass(new POSTPROCESSING.EffectPass(camera, ssao))
 
 
     // // BLOOM pass
@@ -110,11 +97,15 @@ const init = () => {
 
 
 const loadTestGLTF = () => {
-    // const gltflLoader = new GLTFLoader()
     let url = options.testModel.url;
     gltflLoader.load(url, asset => {
         currentModel = asset.scene;
         scene.add(currentModel)
+
+        console.log(currentModel.children[0])
+        // const newMat = new THREE.MeshBasicMaterial({color: 'green'})
+        const newMat = new THREE.ShadowMaterial();
+        currentModel.children[0].material = newMat
     })
 }
 
@@ -122,7 +113,6 @@ const loadTestGLTF = () => {
 const loadGLTF = (file) => {
     const reader = new FileReader();
     reader.onload = function (e) {
-        // const loader = new GLTFLoader();
         const url = URL.createObjectURL(file);
 
         gltflLoader.load(url, function (gltf) {

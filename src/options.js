@@ -2,21 +2,23 @@ import * as THREE from "three"
 
 export const options = {
     useComposer: true,
+    useProgressiveShadows: true,
     renderer: {
         antialias: true,
         alpha: true,
         depth: true,
         stencil: false,
         premultipliedAlpha: false,
-        preserveDrawingBuffer: true
+        preserveDrawingBuffer: false
     },
     camera: [70, window.innerWidth / window.innerHeight, 0.1, 250],
     backgroundColor: new THREE.Color(0xffffff),
     envMap: {
         url: "hdr/studio.hdr",
     },
-    ssao1: {
-
+    N8AO: {
+        radius: 0.5,
+        distanceFalloff: 1,
     },
     ssgi: {
         distance: 5.98,
