@@ -18,7 +18,7 @@
 		"vite-plugin-wasm": "^3.2.1"
 	},
 	"dependencies": {
-		"postprocessing": "^6.31.0",
-		"three": "^0.153.0"
+		"postprocessing": "^6.37.4",
+		"three": "^0.157.0"
 	}
 }

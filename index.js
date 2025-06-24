@@ -61,6 +61,10 @@ const init = () => {
         radius: 2,
         intensity: 1,
     })
+    console.log(ssao)
+    ssao.radius = 0.5
+    ssao.samples = 30
+    ssao.rings = 24
     composer.addPass(new POSTPROCESSING.EffectPass(camera, ssao))
     
     
