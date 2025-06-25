@@ -20,6 +20,6 @@
 	"dependencies": {
 		"n8ao": "^1.10.1",
 		"postprocessing": "^6.37.4",
-		"three": "^0.157.0"
+		"three": "^0.153.0"
 	}
 }

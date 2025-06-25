@@ -11,7 +11,7 @@ import { options } from "./src/options"
 import { debug } from "./src/debug"
 
 
-let scene, camera, renderer, environment, controls, composer, gltflLoader
+let scene, camera, renderer, environment, controls, composer, loader
 let currentModel = null;
 let /**
    * @type {ProgressiveShadows}
@@ -19,7 +19,7 @@ let /**
     progressiveShadows;
 
 
-const init = () => {
+const init = async () => {
 
     debug();
 
@@ -55,8 +55,8 @@ const init = () => {
     const draco = new DRACOLoader();
     draco.setDecoderConfig({ type: "js" });
     draco.setDecoderPath("https://www.gstatic.com/draco/v1/decoders/");
-    gltflLoader = new GLTFLoader();
-    gltflLoader.setDRACOLoader(draco);
+    loader = new GLTFLoader();
+    loader.setDRACOLoader(draco);
 
     // initialize ProgressiveShadows
     const shadowCatcherSize = 8
@@ -99,31 +99,29 @@ const init = () => {
     // const vignetteEffect = new POSTPROCESSING.VignetteEffect(options.vignette)
     // composer.addPass(new POSTPROCESSING.EffectPass(camera, vignetteEffect))
 
+    if (options.testModel.load)
+        await loadTestGLTF();
+
     renderer.setAnimationLoop(loop);
 };
 
 
 
 
-const loadTestGLTF = () => {
+const loadTestGLTF = async () => {
     let url = options.testModel.url;
-    gltflLoader.load(url, asset => {
-        currentModel = asset.scene;
-
-        addShadowsToCurrentModel();
-
-
-        scene.add(currentModel)
-
-        console.log(currentModel)
-
-        // console.log(currentModel.children[0])
-        // // const newMat = new THREE.MeshBasicMaterial({color: 'green'})
-        // const newMat = new THREE.ShadowMaterial();
-        // currentModel.children[0].material = newMat
-
-        progressiveShadows.clear();
+    const gltf = await loader.loadAsync(url)
+    currentModel = gltf.scene;
+    currentModel.traverse((child) => {
+        if (child.isMesh) {
+            child.castShadow = true
+            child.receiveShadow = true
+        }
     })
+    scene.add(currentModel)
+
+    // call this once all models are in scene
+    progressiveShadows.clear();
 }
 
 
@@ -132,7 +130,7 @@ const loadGLTF = (file) => {
     reader.onload = function (e) {
         const url = URL.createObjectURL(file);
 
-        gltflLoader.load(url, function (gltf) {
+        loader.load(url, function (gltf) {
 
             if (currentModel) {
                 scene.remove(currentModel);
@@ -179,39 +177,40 @@ window.addEventListener('resize', function () {
 // render loop
 const loop = () => {
     controls.update();
-    camera.updateMatrixWorld();
+
 
     progressiveShadows.update(camera)
 
-    // render
-    options.useComposer ? composer.render() : renderer.render(scene, camera);
+    // // render
+    // options.useComposer ? composer.render() : renderer.render(scene, camera);
+    renderer.render(scene, camera);
 }
 
 init();
 
-// load test model
-if (options.testModel.load) loadTestGLTF();
+// // load test model
+// if (options.testModel.load) loadTestGLTF();
 
 
-function addShadowsToCurrentModel() {
-    if (!currentModel) return;
-    currentModel.traverse((child) => {
-        if (child.isMesh) {
-            child.castShadow = true
-            child.receiveShadow = true
-        }
-    })
-}
+// function addShadowsToCurrentModel() {
+//     if (!currentModel) return;
+//     currentModel.traverse((child) => {
+//         if (child.isMesh) {
+//             child.castShadow = true
+//             child.receiveShadow = true
+//         }
+//     })
+// }
 
 
-function changeModelColor(color) {
-    if (!currentModel) return;
-    currentModel.traverse((child) => {
-        if (child.isMesh && child.material) {
-            child.material.color.setHex(color);
-        }
-    });
-}
+// function changeModelColor(color) {
+//     if (!currentModel) return;
+//     currentModel.traverse((child) => {
+//         if (child.isMesh && child.material) {
+//             child.material.color.setHex(color);
+//         }
+//     });
+// }
 
 
 
