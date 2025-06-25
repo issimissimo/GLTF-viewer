@@ -2,7 +2,6 @@ import * as THREE from "three"
 
 export const options = {
     useComposer: true,
-    useProgressiveShadows: true,
     renderer: {
         antialias: true,
         alpha: true,
@@ -19,6 +18,10 @@ export const options = {
     N8AO: {
         radius: 0.5,
         distanceFalloff: 1,
+    },
+    progressiveShadows: {
+        use: true,
+        alphaTest: 0.3
     },
     ssgi: {
         distance: 5.98,

@@ -58,22 +58,39 @@ const init = async () => {
     loader = new GLTFLoader();
     loader.setDRACOLoader(draco);
 
-    // initialize ProgressiveShadows
-    const shadowCatcherSize = 8
-    progressiveShadows = new ProgressiveShadows(renderer, scene, { size: shadowCatcherSize })
-    progressiveShadows.lightOrigin.position.set(-3, 3, 3)
 
-    // initialize composer
-    composer = new POSTPROCESSING.EffectComposer(renderer);
+    if (options.progressiveShadows.use) {
 
-    // RENDER pass
-    composer.addPass(new POSTPROCESSING.RenderPass(scene, camera));
+        // initialize ProgressiveShadows
+        const shadowCatcherSize = 8
+        progressiveShadows = new ProgressiveShadows(renderer, scene, { size: shadowCatcherSize })
+        progressiveShadows.lightOrigin.position.set(-3, 3, 3);
+        progressiveShadows.params.alphaTest = options.progressiveShadows.alphaTest;
+    }
 
-    // N8AO pass
-    const n8aopass = new N8AOPostPass(scene, camera, window.innerWidth, window.innerHeight);
-    n8aopass.configuration.aoRadius = options.N8AO.radius;
-    n8aopass.configuration.distanceFalloff = options.N8AO.distanceFalloff;
-    composer.addPass(n8aopass)
+    if (options.useComposer) {
+
+        // initialize composer
+        composer = new POSTPROCESSING.EffectComposer(renderer);
+
+        // RENDER pass
+        composer.addPass(new POSTPROCESSING.RenderPass(scene, camera));
+
+        // N8AO pass
+        const n8aopass = new N8AOPostPass(scene, camera, window.innerWidth, window.innerHeight);
+        n8aopass.configuration.aoRadius = options.N8AO.radius;
+        n8aopass.configuration.distanceFalloff = options.N8AO.distanceFalloff;
+        composer.addPass(n8aopass)
+
+
+        // // VELOCITY pass
+        // const velocityDepthNormalPass = new VelocityDepthNormalPass(scene, camera);
+        // composer.addPass(velocityDepthNormalPass);
+
+        // // SSGI pass
+        // const ssgiEffect = new SSGIEffect(composer, scene, camera, { ...options.ssgi, velocityDepthNormalPass });
+        // composer.addPass(new POSTPROCESSING.EffectPass(scene, ssgiEffect));
+    }
 
 
 
@@ -121,7 +138,9 @@ const loadTestGLTF = async () => {
     scene.add(currentModel)
 
     // call this once all models are in scene
-    progressiveShadows.clear();
+    if (options.progressiveShadows.use) {
+        progressiveShadows.clear();
+    }
 }
 
 
@@ -178,12 +197,14 @@ window.addEventListener('resize', function () {
 const loop = () => {
     controls.update();
 
+    if (options.progressiveShadows.use) {
+        progressiveShadows.update(camera)
+    }
 
-    progressiveShadows.update(camera)
 
-    // // render
-    // options.useComposer ? composer.render() : renderer.render(scene, camera);
-    renderer.render(scene, camera);
+    // render
+    options.useComposer ? composer.render() : renderer.render(scene, camera);
+    // renderer.render(scene, camera);
 }
 
 init();
