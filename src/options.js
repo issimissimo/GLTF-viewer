@@ -20,12 +20,13 @@ export const options = {
         distanceFalloff: 1,
     },
     progressiveShadows: {
-        use: true,
+        use: false,
         alphaTest: 0.3,
         opacity: 0.9,
         color: new THREE.Color(0xb6b6b6),
     },
     ssgi: {
+        use: true,
         distance: 5.98,
         thickness: 2.83,
         denoiseIterations: 1,
@@ -55,6 +56,7 @@ export const options = {
     },
     testModel: {
         load: true,
-        url: "gltf/monkey-plane.glb",
+        url: "gltf/monkey.glb",
+        // url: "gltf/monkey-plane.glb",
     }
 }

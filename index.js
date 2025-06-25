@@ -24,7 +24,7 @@ const init = async () => {
     debug();
 
     scene = new THREE.Scene();
-    // scene.background = options.backgroundColor;
+    scene.background = options.backgroundColor;
 
     camera = new THREE.PerspectiveCamera(...options.camera);
     camera.position.set(0, 0, 2);
@@ -60,6 +60,7 @@ const init = async () => {
 
 
     if (options.progressiveShadows.use) {
+
         // initialize ProgressiveShadows
         const shadowCatcherSize = 8
         progressiveShadows = new ProgressiveShadows(renderer, scene, { size: shadowCatcherSize })
@@ -74,40 +75,38 @@ const init = async () => {
         // initialize composer
         composer = new POSTPROCESSING.EffectComposer(renderer);
 
-        // RENDER pass
-        composer.addPass(new POSTPROCESSING.RenderPass(scene, camera));
+        if (!options.ssgi.use) {
 
-        // N8AO pass
-        const n8aopass = new N8AOPostPass(scene, camera, window.innerWidth, window.innerHeight);
-        n8aopass.configuration.aoRadius = options.N8AO.radius;
-        n8aopass.configuration.distanceFalloff = options.N8AO.distanceFalloff;
-        composer.addPass(n8aopass)
+            // RENDER pass
+            composer.addPass(new POSTPROCESSING.RenderPass(scene, camera));
+
+            // N8AO pass
+            const n8aopass = new N8AOPostPass(scene, camera, window.innerWidth, window.innerHeight);
+            n8aopass.configuration.aoRadius = options.N8AO.radius;
+            n8aopass.configuration.distanceFalloff = options.N8AO.distanceFalloff;
+            composer.addPass(n8aopass)
+        }
+
+        else {
+
+            // VELOCITY pass
+            const velocityDepthNormalPass = new VelocityDepthNormalPass(scene, camera);
+            composer.addPass(velocityDepthNormalPass);
+
+            // SSGI pass
+            const ssgiEffect = new SSGIEffect(composer, scene, camera, { ...options.ssgi, velocityDepthNormalPass });
+            composer.addPass(new POSTPROCESSING.EffectPass(scene, ssgiEffect));
+        }
 
 
 
-        // // VELOCITY pass
-        // const velocityDepthNormalPass = new VelocityDepthNormalPass(scene, camera);
-        // composer.addPass(velocityDepthNormalPass);
 
-        // // SSGI pass
-        // const ssgiEffect = new SSGIEffect(composer, scene, camera, { ...options.ssgi, velocityDepthNormalPass });
-        // composer.addPass(new POSTPROCESSING.EffectPass(scene, ssgiEffect));
     }
 
 
 
     // // BLOOM pass
     // composer.addPass(new POSTPROCESSING.EffectPass(camera, new POSTPROCESSING.BloomEffect()));
-
-
-    // // VELOCITY pass
-    // const velocityDepthNormalPass = new VelocityDepthNormalPass(scene, camera);
-    // composer.addPass(velocityDepthNormalPass);
-
-    // // SSGI pass
-    // const ssgiEffect = new SSGIEffect(composer, scene, camera, { ...options.ssgi, velocityDepthNormalPass });
-    // composer.addPass(new POSTPROCESSING.EffectPass(scene, ssgiEffect));
-
 
     // // TRAA pass
     // const traaEffect = new TRAAEffect(scene, camera, velocityDepthNormalPass, options.traa)
