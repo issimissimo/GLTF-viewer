@@ -60,12 +60,13 @@ const init = async () => {
 
 
     if (options.progressiveShadows.use) {
-
         // initialize ProgressiveShadows
         const shadowCatcherSize = 8
         progressiveShadows = new ProgressiveShadows(renderer, scene, { size: shadowCatcherSize })
-        progressiveShadows.lightOrigin.position.set(-3, 3, 3);
+        progressiveShadows.lightOrigin.position.set(3, 3, 3);
         progressiveShadows.params.alphaTest = options.progressiveShadows.alphaTest;
+        progressiveShadows.shadowCatcherMaterial.opacity = options.progressiveShadows.opacity;
+        progressiveShadows.shadowCatcherMaterial.color = options.progressiveShadows.color;
     }
 
     if (options.useComposer) {
@@ -81,6 +82,7 @@ const init = async () => {
         n8aopass.configuration.aoRadius = options.N8AO.radius;
         n8aopass.configuration.distanceFalloff = options.N8AO.distanceFalloff;
         composer.addPass(n8aopass)
+
 
 
         // // VELOCITY pass
@@ -128,11 +130,18 @@ const init = async () => {
 const loadTestGLTF = async () => {
     let url = options.testModel.url;
     const gltf = await loader.loadAsync(url)
+    const matte = new THREE.ShadowMaterial();
     currentModel = gltf.scene;
     currentModel.traverse((child) => {
         if (child.isMesh) {
             child.castShadow = true
             child.receiveShadow = true
+
+            // hide the plane
+            // and use it only for AO
+            if (child.name == "Plane") {
+                child.material = matte;
+            }
         }
     })
     scene.add(currentModel)

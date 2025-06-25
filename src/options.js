@@ -11,7 +11,7 @@ export const options = {
         preserveDrawingBuffer: false
     },
     camera: [70, window.innerWidth / window.innerHeight, 0.1, 250],
-    backgroundColor: new THREE.Color(0xffffff),
+    backgroundColor: new THREE.Color(0xb6b6b6),
     envMap: {
         url: "hdr/studio.hdr",
     },
@@ -21,7 +21,9 @@ export const options = {
     },
     progressiveShadows: {
         use: true,
-        alphaTest: 0.3
+        alphaTest: 0.3,
+        opacity: 0.9,
+        color: new THREE.Color(0xb6b6b6),
     },
     ssgi: {
         distance: 5.98,
@@ -53,6 +55,6 @@ export const options = {
     },
     testModel: {
         load: true,
-        url: "gltf/monkey.glb",
+        url: "gltf/monkey-plane.glb",
     }
 }

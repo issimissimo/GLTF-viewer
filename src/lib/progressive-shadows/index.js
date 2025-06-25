@@ -95,8 +95,8 @@ class ProgressiveShadows {
 
     // Create the Progressive LightMap Texture
     const format = /(Android|iPad|iPhone|iPod)/g.test(navigator.userAgent) ? HalfFloatType : FloatType
-    this.progressiveLightMap1 = new WebGLRenderTarget(resolution, resolution, { type: format, encoding: this.renderer.outputEncoding })
-    this.progressiveLightMap2 = new WebGLRenderTarget(resolution, resolution, { type: format, encoding: this.renderer.outputEncoding })
+    this.progressiveLightMap1 = new WebGLRenderTarget(resolution, resolution, { type: format, colorSpace: this.renderer.outputColorSpace  })
+    this.progressiveLightMap2 = new WebGLRenderTarget(resolution, resolution, { type: format, colorSpace: this.renderer.outputColorSpace  })
 
     // Material applied to shadow catching plane
     this.shadowCatcherMaterial = new SoftShadowMaterial({
@@ -400,7 +400,7 @@ const SoftShadowMaterial = shaderMaterial(
      vec4 sampledDiffuseColor = texture2D(map, vUv);
      gl_FragColor = vec4(color * sampledDiffuseColor.r * blend, max(0.0, (1.0 - (sampledDiffuseColor.r + sampledDiffuseColor.g + sampledDiffuseColor.b) / alphaTest)) * opacity);
      #include <tonemapping_fragment>
-     #include <encodings_fragment>
+     #include <colorspace_fragment>
    }`
 )
 
