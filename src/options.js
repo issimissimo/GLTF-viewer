@@ -20,13 +20,13 @@ export const options = {
         distanceFalloff: 1,
     },
     progressiveShadows: {
-        use: false,
+        use: true,
         alphaTest: 0.3,
         opacity: 0.9,
         color: new THREE.Color(0xb6b6b6),
     },
     ssgi: {
-        use: true,
+        use: false,
         distance: 5.98,
         thickness: 2.83,
         denoiseIterations: 1,

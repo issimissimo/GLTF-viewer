@@ -19,12 +19,27 @@ let /**
     progressiveShadows;
 
 
-const init = async () => {
+
+
+const initializeProgressiveShadows = () => {
+    if (options.progressiveShadows.use) {
+        const shadowCatcherSize = 8
+        progressiveShadows = new ProgressiveShadows(renderer, scene, { size: shadowCatcherSize })
+        progressiveShadows.lightOrigin.position.set(3, 3, 3);
+        progressiveShadows.params.alphaTest = options.progressiveShadows.alphaTest;
+        progressiveShadows.shadowCatcherMaterial.opacity = options.progressiveShadows.opacity;
+        progressiveShadows.shadowCatcherMaterial.color = options.progressiveShadows.color;
+        progressiveShadows.clear();
+    }
+}
+
+
+const init = () => {
 
     debug();
 
     scene = new THREE.Scene();
-    scene.background = options.backgroundColor;
+    // scene.background = options.backgroundColor;
 
     camera = new THREE.PerspectiveCamera(...options.camera);
     camera.position.set(0, 0, 2);
@@ -57,18 +72,6 @@ const init = async () => {
     draco.setDecoderPath("https://www.gstatic.com/draco/v1/decoders/");
     loader = new GLTFLoader();
     loader.setDRACOLoader(draco);
-
-
-    if (options.progressiveShadows.use) {
-
-        // initialize ProgressiveShadows
-        const shadowCatcherSize = 8
-        progressiveShadows = new ProgressiveShadows(renderer, scene, { size: shadowCatcherSize })
-        progressiveShadows.lightOrigin.position.set(3, 3, 3);
-        progressiveShadows.params.alphaTest = options.progressiveShadows.alphaTest;
-        progressiveShadows.shadowCatcherMaterial.opacity = options.progressiveShadows.opacity;
-        progressiveShadows.shadowCatcherMaterial.color = options.progressiveShadows.color;
-    }
 
     if (options.useComposer) {
 
@@ -117,19 +120,42 @@ const init = async () => {
     // const vignetteEffect = new POSTPROCESSING.VignetteEffect(options.vignette)
     // composer.addPass(new POSTPROCESSING.EffectPass(camera, vignetteEffect))
 
-    if (options.testModel.load)
-        await loadTestGLTF();
+
+
+
+
+
+
 
     renderer.setAnimationLoop(loop);
+
+    if (options.testModel.load) {
+        loadGLTF();
+    }
 };
 
 
 
 
-const loadTestGLTF = async () => {
-    let url = options.testModel.url;
+const loadGLTF = async (fileUrl = null) => {
+
+    // clear
+    if (currentModel) {
+        scene.remove(currentModel);
+
+        if (options.progressiveShadows.use) {
+            progressiveShadows.clear();
+        }
+    }
+
+    let url = fileUrl ? fileUrl : options.testModel.url;
     const gltf = await loader.loadAsync(url)
+
+
     const matte = new THREE.ShadowMaterial();
+
+
+
     currentModel = gltf.scene;
     currentModel.traverse((child) => {
         if (child.isMesh) {
@@ -138,60 +164,33 @@ const loadTestGLTF = async () => {
 
             // hide the plane
             // and use it only for AO
-            if (child.name == "Plane") {
+            if (child.name == "Plane" || child.name == "plane") {
                 child.material = matte;
             }
         }
     })
     scene.add(currentModel)
 
-    // call this once all models are in scene
+    // create new shadows
     if (options.progressiveShadows.use) {
-        progressiveShadows.clear();
+        initializeProgressiveShadows();
     }
 }
 
 
-const loadGLTF = (file) => {
+const openWindowForFileLoading = (file) => {
     const reader = new FileReader();
     reader.onload = function (e) {
         const url = URL.createObjectURL(file);
-
-        loader.load(url, function (gltf) {
-
-            if (currentModel) {
-                scene.remove(currentModel);
-            }
-
-            currentModel = gltf.scene;
-            scene.add(currentModel);
-
-            // center and scale model
-            const box = new THREE.Box3().setFromObject(currentModel);
-            const center = box.getCenter(new THREE.Vector3());
-            const size = box.getSize(new THREE.Vector3());
-
-            currentModel.position.sub(center);
-
-            const maxDim = Math.max(size.x, size.y, size.z);
-            const scale = 2 / maxDim;
-            currentModel.scale.setScalar(scale);
-
-            URL.revokeObjectURL(url);
-        }, undefined, function (error) {
-            console.error('Error loading GLTF:', error);
-            alert('Error loading GLTF - ' + error);
-            URL.revokeObjectURL(url);
-        });
+        loadGLTF(url);
     };
-
     reader.readAsDataURL(file);
 }
 
 document.getElementById('gltfFile').addEventListener('change', function (e) {
     const file = e.target.files[0];
     if (file) {
-        loadGLTF(file);
+        openWindowForFileLoading(file);
     }
 });
 
@@ -205,31 +204,18 @@ window.addEventListener('resize', function () {
 const loop = () => {
     controls.update();
 
-    if (options.progressiveShadows.use) {
+    // update progressiveShadows
+    if (progressiveShadows && options.progressiveShadows.use) {
         progressiveShadows.update(camera)
     }
 
-
     // render
     options.useComposer ? composer.render() : renderer.render(scene, camera);
-    // renderer.render(scene, camera);
 }
 
 init();
 
-// // load test model
-// if (options.testModel.load) loadTestGLTF();
 
-
-// function addShadowsToCurrentModel() {
-//     if (!currentModel) return;
-//     currentModel.traverse((child) => {
-//         if (child.isMesh) {
-//             child.castShadow = true
-//             child.receiveShadow = true
-//         }
-//     })
-// }
 
 
 // function changeModelColor(color) {
